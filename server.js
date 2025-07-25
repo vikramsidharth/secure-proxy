@@ -4,30 +4,33 @@ const cors = require('cors');
 
 const app = express();
 
-// Enable CORS and JSON
+// Enable CORS
 app.use(cors());
-app.use(express.json());
 
-// Define target backend
+// Proxy target (original backend)
 const target = 'http://atmsmobileapi.neemus.com';
 
-// Proxy config
-app.use('/api', createProxyMiddleware({
-  target: target,
-  changeOrigin: true,
-  secure: false, // allow HTTP
-  pathRewrite: {
-    '^/api': '/api',
-  }
-}));
+app.use(
+  '/api',
+  createProxyMiddleware({
+    target,
+    changeOrigin: true,
+    secure: false,
+    pathRewrite: {
+      '^/api': '/api',
+    },
+    // Remove this — causes body loss on some platforms
+    // onProxyReq manually rewriting body can break things
+  })
+);
 
-// Health check
+// Optional: health check
 app.get('/', (req, res) => {
-  res.send('✅ Proxy is up!');
+  res.send('✅ Proxy is running.');
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ HTTPS Proxy running on port ${PORT}`);
+  console.log(`✅ Proxy server listening on port ${PORT}`);
 });
