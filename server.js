@@ -7,6 +7,9 @@ const app = express();
 // 🔓 Enable CORS for all requests
 app.use(cors());
 
+// 🧠 Body parser for JSON payloads
+app.use(express.json());  // <-- 🔥 This is critical
+
 // 📦 Proxy setup
 const target = 'http://atmsmobileapi.neemus.com';
 app.use(
@@ -16,7 +19,16 @@ app.use(
     changeOrigin: true,
     secure: false,
     pathRewrite: {
-      '^/api': '/api'  // optional, but keeps /api in path
+      '^/api': '/api',
+    },
+    onProxyReq: (proxyReq, req, res) => {
+      if (req.body) {
+        const bodyData = JSON.stringify(req.body);
+        // Set proper headers and send body
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+      }
     },
   })
 );
